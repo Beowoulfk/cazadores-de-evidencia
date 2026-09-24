@@ -46,7 +46,7 @@ const DEFAULT_DATA = {
      opts:["La intuición y creencias personales","Datos observables, cifras y hechos verificables","Solo teorías abstractas","Lo que diga la mayoría en redes"],
      correct:1,exp:"El empirismo se basa en datos observables y hechos verificables."},
     {stage:"amarillo",q:"¿Cuál es la variable principal del estudio?",
-     opts:["El precio del petróleo","La percepción de los pacientes sobre la entrega","El clima de Medellín","El número de hospitales"],
+     opts:["El precio del petróleo","La percepción de los pacientes sobre la entrega de medicamentos","El clima de Medellín","El número de hospitales"],
      correct:1,exp:"El fenómeno central es la percepción de los pacientes sobre la entrega de medicamentos."},
     {stage:"amarillo",q:"¿Cuál es el factor institucional clave de la hipótesis?",
      opts:["El color del logo de la EPS","Si la EPS está intervenida o no intervenida","La edad del gerente","El nombre del gestor"],
