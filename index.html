@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cazadores de Evidencia</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="app">
+
+  <!-- ===================== INICIO ===================== -->
+  <div id="start" class="card">
+    <div class="linkbar"><button onclick="openEditor()">✏️ Editar preguntas y colores</button></div>
+    <span class="badge" style="background:var(--azul)">Trivia investigativa · 1 a 4 jugadores</span>
+    <h1>🔍 Cazadores de Evidencia<span class="sub">Sigue el rastro del medicamento que no llega</span></h1>
+    <div class="story">
+      <h3>La historia de Don Gustavo (léela antes de jugar)</h3>
+      <p>Don Gustavo, de 68 años, es un paciente crónico de Medellín. Un martes va por su pastilla y le dicen: <b>"No hay. Vuelva."</b> Pero en la droguería de la esquina sí la venden. ¿Por qué su EPS no se la entrega?</p>
+      <p>El problema no es que falten medicamentos: <b>es el dinero que se atasca</b> en el camino.</p>
+      <ol>
+        <li>💰 El Estado gira a la EPS una plata fija por afiliado (la UPC)… que no alcanza.</li>
+        <li>🏢 La EPS recibe por adelantado, pero le paga tarde al gestor.</li>
+        <li>📦 El gestor no cobra y le debe al laboratorio.</li>
+        <li>🏭 El laboratorio deja de despachar.</li>
+        <li>🧓 Don Gustavo se queda sin su medicamento.</li>
+      </ol>
+    </div>
+    <p><b>Cómo se juega:</b> juega 1 solo o compiten hasta 4 jugadores. En cada pregunta responde cada jugador por turnos; ganan más puntos quienes acierten y respondan rápido. Al final hay podio (o tu puntaje, si juegas solo).</p>
+    <button class="btn" onclick="goPlayers()">▶ Jugar</button>
+    <div class="foot">Sin registro · Funciona en celular y computador</div>
+  </div>
+
+  <!-- ===================== JUGADORES ===================== -->
+  <div id="players" class="card hidden">
+    <h2>¿Cuántos van a jugar?</h2>
+    <div class="count-pick">
+      <button data-n="1">1</button>
+      <button data-n="2">2</button>
+      <button data-n="3">3</button>
+      <button data-n="4">4</button>
+    </div>
+    <label>Nombres (opcional, puedes dejarlos en blanco)</label>
+    <div id="playerInputs" class="player-inputs"></div>
+    <div class="btn-row">
+      <button class="btn secondary" onclick="show('start')">← Volver</button>
+      <button class="btn" onclick="startGame()">¡Comenzar! 🏁</button>
+    </div>
+  </div>
+
+  <!-- ===================== JUEGO ===================== -->
+  <div id="game" class="card hidden">
+    <div class="topbar">
+      <button class="btn small secondary" style="margin:0" onclick="goHome()" title="Volver al inicio">🏠 Inicio</button>
+      <span id="stageBadge" class="badge">Etapa</span>
+      <span id="turnPill" class="turn-pill">Turno</span>
+      <span id="timer" class="timer">20</span>
+    </div>
+    <div id="scoreboard" class="scoreboard"></div>
+    <div class="progress"><div id="bar"></div></div>
+    <div id="qcount" style="color:var(--muted);font-size:.85rem;margin-bottom:8px"></div>
+    <div id="question" class="question"></div>
+    <div id="options" class="options"></div>
+    <div id="feedback" class="feedback"></div>
+    <button id="nextBtn" class="btn hidden" onclick="nextQuestion()">Siguiente →</button>
+  </div>
+
+  <!-- ===================== PODIO / FINAL ===================== -->
+  <div id="final" class="card hidden">
+    <h2 style="text-align:center">Resultados</h2>
+    <div id="podium" class="podium"></div>
+    <div class="rank" id="winnerText" style="text-align:center;font-size:1.15rem;color:#fbbf24;font-weight:700;margin-bottom:12px"></div>
+    <ul id="resultList" class="result-list"></ul>
+    <div class="story">
+      <h3>La conclusión de la investigación</h3>
+      <p>La causa no es la escasez ni un solo gestor: es el <b>diseño financiero</b> (UPC insuficiente + pago anticipado + vigilancia que reacciona tarde). Cambiar de gestor sin cambiar las reglas es solo un parche.</p>
+    </div>
+    <div class="btn-row">
+      <button class="btn secondary" onclick="goHome()">🏠 Inicio</button>
+      <button class="btn" onclick="playAgain()">↺ Jugar de nuevo</button>
+    </div>
+  </div>
+
+  <!-- ===================== EDITOR ===================== -->
+  <div id="editor" class="card hidden">
+    <div class="linkbar"><button onclick="goHome()">🏠 Inicio</button></div>
+    <h2>✏️ Editor de preguntas y colores</h2>
+    <p class="hint">💾 <b>Todo se guarda solo</b> en este navegador mientras escribes: no necesitas exportar para conservar tus cambios aquí. Exporta solo si quieres una copia de respaldo o pasarla a otro equipo. Para que <b>todos</b> vean tus preguntas al abrir el link publicado, usa "Fijar como predeterminadas".</p>
+
+    <h3 style="margin-top:14px">Etapas y colores</h3>
+    <p class="hint">Cambia el nombre y el color de cada etapa. Los colores se aplican al instante.</p>
+    <div id="colorGrid" class="color-grid"></div>
+
+    <label>Segundos por pregunta</label>
+    <input type="number" id="timeInput" min="5" max="120" oninput="setTime(this.value)" style="max-width:140px" />
+
+    <h3 style="margin-top:18px">Preguntas <span id="qTotal" class="hint"></span></h3>
+    <div id="editorList"></div>
+    <button class="btn secondary" onclick="addQuestion()">+ Añadir pregunta</button>
+
+    <div class="btn-row" style="margin-top:18px">
+      <button class="btn small secondary" onclick="exportData()">⬇ Exportar</button>
+      <label class="btn small secondary" style="margin:0;cursor:pointer">⬆ Importar
+        <input type="file" accept="application/json" onchange="importData(this)" style="display:none" />
+      </label>
+      <button class="btn small danger" onclick="resetData()">↺ Restablecer</button>
+    </div>
+
+    <button class="btn secondary" onclick="pinDefaults()" style="margin-top:10px">📌 Fijar como predeterminadas (para todos)</button>
+    <p class="hint">Genera el código para pegar en <b>game.js</b> y dejar estas preguntas fijas para cualquiera que abra el link.</p>
+
+    <button class="btn" onclick="closeEditor()" style="margin-top:16px">✓ Listo, volver al inicio</button>
+  </div>
+
+  <div class="foot">Deisy Tatiana Correa Palacio · Verónica Marcela Henao Jaramillo — IU Digital de Antioquia</div>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>
