@@ -164,7 +164,7 @@ function updateSoundButtons(){
    IMPORTANTE: sube DATA_VERSION cada vez que cambies las preguntas
    por defecto. Así los navegadores con datos viejos cargan las nuevas
    automáticamente, sin tener que pulsar "Restablecer". */
-const DATA_VERSION = 2;
+const DATA_VERSION = 3;
 const DEFAULT_DATA = {
   version: DATA_VERSION,
   stages: {
@@ -172,7 +172,7 @@ const DEFAULT_DATA = {
     verde:    { name: "Fuentes y Evidencia",   color: "#16a34a" },
     amarillo: { name: "Hipótesis y Variables", color: "#d97706" },
     rojo:     { name: "Regulación y Cierre",   color: "#dc2626" },
-    morado:   { name: "Detecta la Trampa",     color: "#7c3aed" }
+    morado:   { name: "Verdadero o Falso",      color: "#7c3aed" }
   },
   timePerQuestion: 20,
   questions: [
@@ -222,24 +222,24 @@ const DEFAULT_DATA = {
      opts:["Porque nunca faltan medicamentos","Fármacos básicos había en el canal comercial pero no en el institucional","Porque el Invima lo prohibió","Porque los pacientes no los necesitaban"],
      correct:1,exp:"Valsartán, losartán o acetaminofén sí estaban en droguerías, pero no llegaban por la EPS."},
 
-    {stage:"morado",q:"¿VERDADERO o TRAMPA? \"La crisis se debe a que no existen medicamentos en Colombia; hay escasez física total.\"",
-     opts:["Verdadero","Es trampa (falso)"],
-     correct:1,exp:"Es trampa: los medicamentos sí están en el canal comercial; lo bloqueado es el canal institucional."},
-    {stage:"morado",q:"¿VERDADERO o TRAMPA? \"El problema se resuelve simplemente cambiando el gestor farmacéutico que suspende el servicio.\"",
-     opts:["Verdadero","Es trampa (falso)"],
-     correct:1,exp:"Es trampa: si no cambian las reglas (UPC, pagos, vigilancia), el siguiente gestor hará lo mismo. Es un parche."},
-    {stage:"morado",q:"¿VERDADERO o TRAMPA? \"La hipótesis dice que las EPS intervenidas entregan mejor los medicamentos.\"",
-     opts:["Verdadero","Es trampa (falso)"],
-     correct:1,exp:"Es trampa: es al revés; la entrega se percibe como más demorada e incompleta en las intervenidas."},
-    {stage:"morado",q:"¿VERDADERO o TRAMPA? \"Como es una postura empirista, basta con la opinión personal sin datos.\"",
-     opts:["Verdadero","Es trampa (falso)"],
-     correct:1,exp:"Es trampa: el empirismo se apoya justamente en datos observables y hechos verificables."},
-    {stage:"morado",q:"¿VERDADERO o TRAMPA? \"La tutela siempre garantiza que el paciente reciba su medicamento a tiempo.\"",
-     opts:["Verdadero","Es trampa (falso)"],
-     correct:1,exp:"Es trampa: hay casos con fallo y hasta desacato en los que el medicamento igual no llegó."},
-    {stage:"morado",q:"¿VERDADERO o TRAMPA? \"La UPC se calcula según las necesidades futuras y siempre cubre los costos reales.\"",
-     opts:["Verdadero","Es trampa (falso)"],
-     correct:1,exp:"Es trampa: se calcula sobre cifras históricas ajustadas por inflación y resultó insuficiente."}
+    {stage:"morado",q:"La crisis se debe a que no existen medicamentos en Colombia; hay escasez física total.",
+     opts:["Verdadero","Falso"],
+     correct:1,exp:"Falso: los medicamentos sí están en el canal comercial; lo bloqueado es el canal institucional."},
+    {stage:"morado",q:"El problema se resuelve simplemente cambiando el gestor farmacéutico que suspende el servicio.",
+     opts:["Verdadero","Falso"],
+     correct:1,exp:"Falso: si no cambian las reglas (UPC, pagos, vigilancia), el siguiente gestor hará lo mismo. Es un parche."},
+    {stage:"morado",q:"La hipótesis afirma que las EPS intervenidas entregan mejor los medicamentos que las no intervenidas.",
+     opts:["Verdadero","Falso"],
+     correct:1,exp:"Falso: es al revés; la entrega se percibe como más demorada e incompleta en las intervenidas."},
+    {stage:"morado",q:"Como el ensayo usa una postura empirista, basta con la opinión personal y no hacen falta datos.",
+     opts:["Verdadero","Falso"],
+     correct:1,exp:"Falso: el empirismo se apoya justamente en datos observables y hechos verificables."},
+    {stage:"morado",q:"La acción de tutela siempre garantiza que el paciente reciba su medicamento a tiempo.",
+     opts:["Verdadero","Falso"],
+     correct:1,exp:"Falso: hay casos con fallo y hasta desacato en los que el medicamento igual no llegó."},
+    {stage:"morado",q:"La UPC se calcula según las necesidades futuras y siempre cubre los costos reales del sistema.",
+     opts:["Verdadero","Falso"],
+     correct:1,exp:"Falso: se calcula sobre cifras históricas ajustadas por inflación y resultó insuficiente."}
   ]
 };
 
