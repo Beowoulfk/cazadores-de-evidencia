@@ -5,14 +5,174 @@
    ============================================================ */
 
 const STORE_KEY = "cazadores_data_v1";
+const SOUND_KEY = "cazadores_sound";
 
-/* ---- Datos por defecto (etapas + 14 preguntas) ---- */
+/* ============================================================
+   SONIDO (Web Audio API, sin archivos externos)
+   ============================================================ */
+let audioCtx = null;
+let soundOn = (localStorage.getItem(SOUND_KEY) !== "off"); // por defecto activado
+
+function ensureAudio(){
+  if(!audioCtx){
+    try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(e){ audioCtx = null; }
+  }
+  if(audioCtx && audioCtx.state === "suspended"){ audioCtx.resume(); }
+  return audioCtx;
+}
+
+// Reproduce un tono simple
+function tone(freq, start, dur, type, vol){
+  const ctx = audioCtx;
+  if(!ctx) return;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type || "sine";
+  osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
+  gain.gain.setValueAtTime(0.0001, ctx.currentTime + start);
+  gain.gain.exponentialRampToValueAtTime(vol || 0.25, ctx.currentTime + start + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + start + dur);
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.start(ctx.currentTime + start);
+  osc.stop(ctx.currentTime + start + dur + 0.02);
+}
+
+function playSound(name){
+  if(!soundOn) return;
+  if(!ensureAudio()) return;
+  switch(name){
+    case "correct": // acorde ascendente alegre
+      tone(523,0,0.12,"triangle",0.25);
+      tone(659,0.10,0.12,"triangle",0.25);
+      tone(784,0.20,0.20,"triangle",0.28);
+      break;
+    case "wrong": // grave descendente
+      tone(311,0,0.18,"sawtooth",0.22);
+      tone(233,0.14,0.28,"sawtooth",0.22);
+      break;
+    case "timeout": // alerta doble
+      tone(440,0,0.14,"square",0.20);
+      tone(440,0.18,0.14,"square",0.20);
+      break;
+    case "tick": // tic de cuenta regresiva
+      tone(880,0,0.05,"square",0.12);
+      break;
+    case "click": // avanzar
+      tone(660,0,0.06,"triangle",0.16);
+      break;
+    case "win": // melodía de victoria
+      tone(523,0,0.15,"triangle",0.28);
+      tone(659,0.15,0.15,"triangle",0.28);
+      tone(784,0.30,0.15,"triangle",0.28);
+      tone(1047,0.45,0.35,"triangle",0.30);
+      break;
+    case "start": // inicio
+      tone(392,0,0.12,"triangle",0.22);
+      tone(587,0.12,0.18,"triangle",0.24);
+      break;
+  }
+}
+
+/* ---- Música de fondo (loop generado por código) ---- */
+const MUSIC_KEY = "cazadores_music";
+let musicOn = (localStorage.getItem(MUSIC_KEY) !== "off"); // por defecto activada
+let musicNodes = null;      // {gain, timer}
+let musicStep = 0;
+
+// Melodía suave en bucle (notas en Hz). Escala pentatónica agradable.
+const MUSIC_NOTES = [392, 440, 523, 440, 587, 523, 440, 392];
+const MUSIC_BASS  = [131, 131, 165, 165, 175, 175, 131, 131];
+
+function startMusic(){
+  if(!musicOn) return;
+  if(!ensureAudio()) return;
+  if(musicNodes) return; // ya está sonando
+  const ctx = audioCtx;
+  const master = ctx.createGain();
+  master.gain.value = 0.10;   // volumen bajo para no tapar los efectos
+  master.connect(ctx.destination);
+
+  musicStep = 0;
+  const stepMs = 420; // velocidad del loop
+  const tick = ()=>{
+    if(!musicNodes) return;
+    const t = ctx.currentTime;
+    // melodía
+    const nOsc = ctx.createOscillator();
+    const nGain = ctx.createGain();
+    nOsc.type = "triangle";
+    nOsc.frequency.setValueAtTime(MUSIC_NOTES[musicStep % MUSIC_NOTES.length], t);
+    nGain.gain.setValueAtTime(0.0001, t);
+    nGain.gain.exponentialRampToValueAtTime(0.5, t+0.03);
+    nGain.gain.exponentialRampToValueAtTime(0.0001, t+0.38);
+    nOsc.connect(nGain); nGain.connect(master);
+    nOsc.start(t); nOsc.stop(t+0.42);
+    // bajo
+    const bOsc = ctx.createOscillator();
+    const bGain = ctx.createGain();
+    bOsc.type = "sine";
+    bOsc.frequency.setValueAtTime(MUSIC_BASS[musicStep % MUSIC_BASS.length], t);
+    bGain.gain.setValueAtTime(0.0001, t);
+    bGain.gain.exponentialRampToValueAtTime(0.4, t+0.03);
+    bGain.gain.exponentialRampToValueAtTime(0.0001, t+0.40);
+    bOsc.connect(bGain); bGain.connect(master);
+    bOsc.start(t); bOsc.stop(t+0.44);
+
+    musicStep++;
+  };
+  const timerId = setInterval(tick, stepMs);
+  musicNodes = { master, timerId };
+  tick();
+}
+
+function stopMusic(){
+  if(musicNodes){
+    clearInterval(musicNodes.timerId);
+    try{ musicNodes.master.disconnect(); }catch(e){}
+    musicNodes = null;
+  }
+}
+
+function toggleMusic(){
+  musicOn = !musicOn;
+  localStorage.setItem(MUSIC_KEY, musicOn ? "on" : "off");
+  updateSoundButtons();
+  if(musicOn){ ensureAudio(); startMusic(); }
+  else{ stopMusic(); }
+}
+
+function toggleSound(){
+  soundOn = !soundOn;
+  localStorage.setItem(SOUND_KEY, soundOn ? "on" : "off");
+  updateSoundButtons();
+  if(soundOn){ ensureAudio(); playSound("click"); }
+}
+function updateSoundButtons(){
+  document.querySelectorAll(".sound-toggle").forEach(b=>{
+    b.textContent = soundOn ? "🔊" : "🔇";
+    b.title = soundOn ? "Efectos activados (clic para silenciar)" : "Efectos silenciados (clic para activar)";
+  });
+  document.querySelectorAll(".music-toggle").forEach(b=>{
+    b.textContent = musicOn ? "🎵" : "🎵̶";
+    b.style.opacity = musicOn ? "1" : "0.45";
+    b.title = musicOn ? "Música activada (clic para apagar)" : "Música apagada (clic para activar)";
+  });
+}
+
+/* ---- Datos por defecto (etapas + preguntas) ----
+   IMPORTANTE: sube DATA_VERSION cada vez que cambies las preguntas
+   por defecto. Así los navegadores con datos viejos cargan las nuevas
+   automáticamente, sin tener que pulsar "Restablecer". */
+const DATA_VERSION = 2;
 const DEFAULT_DATA = {
+  version: DATA_VERSION,
   stages: {
     azul:     { name: "Observación",          color: "#2563eb" },
     verde:    { name: "Fuentes y Evidencia",   color: "#16a34a" },
     amarillo: { name: "Hipótesis y Variables", color: "#d97706" },
-    rojo:     { name: "Regulación y Cierre",   color: "#dc2626" }
+    rojo:     { name: "Regulación y Cierre",   color: "#dc2626" },
+    morado:   { name: "Detecta la Trampa",     color: "#7c3aed" }
   },
   timePerQuestion: 20,
   questions: [
@@ -60,7 +220,26 @@ const DEFAULT_DATA = {
      correct:1,exp:"La causa es el diseño financiero, no la escasez ni un gestor puntual."},
     {stage:"rojo",q:"¿Por qué se descarta la escasez física como causa principal?",
      opts:["Porque nunca faltan medicamentos","Fármacos básicos había en el canal comercial pero no en el institucional","Porque el Invima lo prohibió","Porque los pacientes no los necesitaban"],
-     correct:1,exp:"Valsartán, losartán o acetaminofén sí estaban en droguerías, pero no llegaban por la EPS."}
+     correct:1,exp:"Valsartán, losartán o acetaminofén sí estaban en droguerías, pero no llegaban por la EPS."},
+
+    {stage:"morado",q:"¿VERDADERO o TRAMPA? \"La crisis se debe a que no existen medicamentos en Colombia; hay escasez física total.\"",
+     opts:["Verdadero","Es trampa (falso)"],
+     correct:1,exp:"Es trampa: los medicamentos sí están en el canal comercial; lo bloqueado es el canal institucional."},
+    {stage:"morado",q:"¿VERDADERO o TRAMPA? \"El problema se resuelve simplemente cambiando el gestor farmacéutico que suspende el servicio.\"",
+     opts:["Verdadero","Es trampa (falso)"],
+     correct:1,exp:"Es trampa: si no cambian las reglas (UPC, pagos, vigilancia), el siguiente gestor hará lo mismo. Es un parche."},
+    {stage:"morado",q:"¿VERDADERO o TRAMPA? \"La hipótesis dice que las EPS intervenidas entregan mejor los medicamentos.\"",
+     opts:["Verdadero","Es trampa (falso)"],
+     correct:1,exp:"Es trampa: es al revés; la entrega se percibe como más demorada e incompleta en las intervenidas."},
+    {stage:"morado",q:"¿VERDADERO o TRAMPA? \"Como es una postura empirista, basta con la opinión personal sin datos.\"",
+     opts:["Verdadero","Es trampa (falso)"],
+     correct:1,exp:"Es trampa: el empirismo se apoya justamente en datos observables y hechos verificables."},
+    {stage:"morado",q:"¿VERDADERO o TRAMPA? \"La tutela siempre garantiza que el paciente reciba su medicamento a tiempo.\"",
+     opts:["Verdadero","Es trampa (falso)"],
+     correct:1,exp:"Es trampa: hay casos con fallo y hasta desacato en los que el medicamento igual no llegó."},
+    {stage:"morado",q:"¿VERDADERO o TRAMPA? \"La UPC se calcula según las necesidades futuras y siempre cubre los costos reales.\"",
+     opts:["Verdadero","Es trampa (falso)"],
+     correct:1,exp:"Es trampa: se calcula sobre cifras históricas ajustadas por inflación y resultó insuficiente."}
   ]
 };
 
@@ -79,7 +258,17 @@ function loadData(){
     const raw = localStorage.getItem(STORE_KEY);
     if(raw){
       const parsed = JSON.parse(raw);
-      if(parsed && parsed.questions && parsed.stages) return parsed;
+      if(parsed && parsed.questions && parsed.stages){
+        // Si los datos guardados son de una versión anterior a la del código,
+        // se cargan automáticamente las preguntas nuevas por defecto.
+        const savedVersion = parsed.version || 0;
+        if(savedVersion < DATA_VERSION){
+          const fresh = structuredClone(DEFAULT_DATA);
+          localStorage.setItem(STORE_KEY, JSON.stringify(fresh));
+          return fresh;
+        }
+        return parsed;
+      }
     }
   }catch(e){ console.warn("No se pudo leer localStorage", e); }
   return structuredClone(DEFAULT_DATA);
@@ -106,10 +295,11 @@ function show(id){
 }
 function applyColors(){
   const r = document.documentElement.style;
-  r.setProperty("--azul", DATA.stages.azul.color);
-  r.setProperty("--verde", DATA.stages.verde.color);
-  r.setProperty("--amarillo", DATA.stages.amarillo.color);
-  r.setProperty("--rojo", DATA.stages.rojo.color);
+  Object.keys(DATA.stages).forEach(key=>{
+    if(DATA.stages[key] && DATA.stages[key].color){
+      r.setProperty("--"+key, DATA.stages[key].color);
+    }
+  });
 }
 function toast(msg){
   let t = document.getElementById("toast");
@@ -123,6 +313,7 @@ function toast(msg){
    ============================================================ */
 function goHome(){
   clearInterval(timer);        // detiene el temporizador si estaba corriendo
+  stopMusic();
   game = null;
   show("start");
 }
@@ -159,6 +350,7 @@ function startGame(){
     players.push({ name: v || ("Jugador "+(i+1)), score:0, correct:0 });
   }
   game = { players, order: shuffle([...Array(DATA.questions.length).keys()]), pos:0, turn:0 };
+  ensureAudio(); playSound("start"); startMusic();
   show("game");
   renderQuestion();
 }
@@ -204,6 +396,7 @@ function renderQuestion(){
   clearInterval(timer);
   timer=setInterval(()=>{
     timeLeft--; updateTimer();
+    if(timeLeft>0 && timeLeft<=3){ playSound("tick"); }
     if(timeLeft<=0){ clearInterval(timer); choose(-1); }
   },1000);
 }
@@ -242,10 +435,13 @@ function choose(i){
     const gained=100 + Math.round((timeLeft/DATA.timePerQuestion)*50);
     player.score+=gained; player.correct++;
     fb.innerHTML="✅ <b>¡"+escapeHtml(player.name)+" acertó!</b> +"+gained+" puntos<br>"+escapeHtml(item.exp);
+    playSound("correct");
   }else if(i===-1){
     fb.innerHTML="⏱ <b>Se acabó el tiempo, "+escapeHtml(player.name)+".</b><br>"+escapeHtml(item.exp);
+    playSound("timeout");
   }else{
     fb.innerHTML="❌ <b>Incorrecto, "+escapeHtml(player.name)+".</b><br>"+escapeHtml(item.exp);
+    playSound("wrong");
   }
   fb.classList.add("show");
   document.getElementById("bar").style.width=((game.pos+1)/game.order.length*100)+"%";
@@ -260,6 +456,7 @@ function choose(i){
 }
 
 function nextQuestion(){
+  playSound("click");
   // pasa al siguiente jugador; cuando todos jugaron esta pregunta, avanza a la siguiente
   game.turn++;
   if(game.turn>=game.players.length){
@@ -272,6 +469,8 @@ function nextQuestion(){
 
 function showFinal(){
   show("final");
+  stopMusic();
+  playSound("win");
   const ranked=[...game.players].sort((a,b)=>b.score-a.score);
   const total=game.order.length;
 
@@ -461,6 +660,7 @@ function escapeAttr(s){ return escapeHtml(s); }
 /* ---- init ---- */
 document.addEventListener("DOMContentLoaded",()=>{
   applyColors();
+  updateSoundButtons();
   document.querySelectorAll(".count-pick button").forEach(b=>{
     b.onclick=()=>setPlayerCount(parseInt(b.dataset.n));
   });

@@ -11,7 +11,11 @@
 
   <!-- ===================== INICIO ===================== -->
   <div id="start" class="card">
-    <div class="linkbar"><button onclick="openEditor()">✏️ Editar preguntas y colores</button></div>
+    <div class="linkbar">
+      <button class="music-toggle" onclick="toggleMusic()" title="Música">🎵</button>
+      <button class="sound-toggle" onclick="toggleSound()" title="Sonido">🔊</button>
+      <button onclick="openEditor()">✏️ Editar preguntas y colores</button>
+    </div>
     <span class="badge" style="background:var(--azul)">Trivia investigativa · 1 a 4 jugadores</span>
     <h1>💊¿Quien tiene mi medicamento?<span class="sub">Sigue el rastro del medicamento que no llega</span></h1>
     <div class="story">
@@ -54,6 +58,8 @@
       <button class="btn small secondary" style="margin:0" onclick="goHome()" title="Volver al inicio">🏠 Inicio</button>
       <span id="stageBadge" class="badge">Etapa</span>
       <span id="turnPill" class="turn-pill">Turno</span>
+      <button class="music-toggle" onclick="toggleMusic()" title="Música">🎵</button>
+      <button class="sound-toggle" onclick="toggleSound()" title="Sonido">🔊</button>
       <span id="timer" class="timer">20</span>
     </div>
     <div id="scoreboard" class="scoreboard"></div>
